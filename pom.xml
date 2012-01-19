@@ -68,6 +68,7 @@
         <module>blueprints-rexster-graph</module>
         <module>blueprints-sail-graph</module>
         <module>blueprints-test</module>
+        <module>blueprints-neo4jrest-graph</module>
     </modules>
 
     <properties>

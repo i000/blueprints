@@ -35,8 +35,8 @@ public class Neo4jRestGraphTest extends GraphTest {
         this.isRDFModel = false;
         this.supportsVertexIteration = true;
         this.supportsEdgeIteration = true;
-        this.supportsVertexIndex = false;
-        this.supportsEdgeIndex = false;
+        this.supportsVertexIndex = true;
+        this.supportsEdgeIndex = true;
         this.ignoresSuppliedIds = true;
         this.supportsTransactions = false;
     }
@@ -53,45 +53,84 @@ public class Neo4jRestGraphTest extends GraphTest {
         printTestPerformance("VertexTestSuite", this.stopWatch());
     }
 
-    public void xtestEdgeTestSuite() throws Exception {
+    public void testEdgeTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new EdgeTestSuite(this));
         printTestPerformance("EdgeTestSuite", this.stopWatch());
     }
 
-    public void xtestGraphTestSuite() throws Exception {
+    public void testGraphTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new GraphTestSuite(this));
         printTestPerformance("GraphTestSuite", this.stopWatch());
     }
 
-//    public void testIndexableGraphTestSuite() throws Exception {
-//        this.stopWatch();
-//        doTestSuite(new IndexableGraphTestSuite(this));
-//        printTestPerformance("IndexableGraphTestSuite", this.stopWatch());
-//    }
+//  public void testQueryIndex() throws Exception {
+//  String directory = System.getProperty("neo4jGraphDirectory");
+//  if (directory == null)
+//      directory = this.getWorkingDirectory();
+//  IndexableGraph graph = new Neo4jGraph(directory);
+//  Vertex a = graph.addVertex(null);
+//  a.setProperty("name", "marko");
+//  Iterator itty = graph.getIndex(Index.VERTICES, Vertex.class).get("name", Neo4jTokens.QUERY_HEADER + "*rko").iterator();
+//  int counter = 0;
+//  while (itty.hasNext()) {
+//      counter++;
+//      assertEquals(itty.next(), a);
+//  }
+//  assertEquals(counter, 1);
 //
-//    public void testIndexTestSuite() throws Exception {
-//        this.stopWatch();
-//        doTestSuite(new IndexTestSuite(this));
-//        printTestPerformance("IndexTestSuite", this.stopWatch());
-//    }
+//  Vertex b = graph.addVertex(null);
+//  Edge edge = graph.addEdge(null, a, b, "knows");
+//  edge.setProperty("weight", 0.75);
+//  itty = graph.getIndex(Index.EDGES, Edge.class).get("label", Neo4jTokens.QUERY_HEADER + "k?ows").iterator();
+//  counter = 0;
+//  while (itty.hasNext()) {
+//      counter++;
+//      assertEquals(itty.next(), edge);
+//  }
+//  assertEquals(counter, 1);
+//  itty = graph.getIndex(Index.EDGES, Edge.class).get("weight", Neo4jTokens.QUERY_HEADER + "[0.5 TO 1.0]").iterator();
+//  counter = 0;
+//  while (itty.hasNext()) {
+//      counter++;
+//      assertEquals(itty.next(), edge);
+//  }
+//  assertEquals(counter, 1);
+//  assertEquals(count(graph.getIndex(Index.EDGES, Edge.class).get("weight", Neo4jTokens.QUERY_HEADER + "[0.1 TO 0.5]")), 0);
 //
-//    public void testAutomaticIndexTestSuite() throws Exception {
-//        this.stopWatch();
-//        doTestSuite(new AutomaticIndexTestSuite(this));
-//        printTestPerformance("AutomaticIndexTestSuite", this.stopWatch());
-//    }
 //
+//  graph.shutdown();
+//  deleteDirectory(new File(directory));
+//}
+    
+    public void testIndexableGraphTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new IndexableGraphTestSuite(this));
+        printTestPerformance("IndexableGraphTestSuite", this.stopWatch());
+    }
 
-    public void xtestGraphMLReaderTestSuite() throws Exception {
+    public void testIndexTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new IndexTestSuite(this));
+        printTestPerformance("IndexTestSuite", this.stopWatch());
+    }
+
+    public void testAutomaticIndexTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new AutomaticIndexTestSuite(this));
+        printTestPerformance("AutomaticIndexTestSuite", this.stopWatch());
+    }
+
+
+    public void testGraphMLReaderTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new GraphMLReaderTestSuite(this));
         printTestPerformance("GraphMLReaderTestSuite", this.stopWatch());
     }
 
     public Graph getGraphInstance() {
-    	Neo4jRestGraph graph = new Neo4jRestGraph(server);
+    	Neo4jRestGraph graph = new Neo4jRestGraph(server, false);
     	return graph;
     }
     
@@ -99,95 +138,34 @@ public class Neo4jRestGraphTest extends GraphTest {
         String doTest = System.getProperty("testNeo4jRestGraph");
         if (doTest == null || doTest.equals("true")) {
             for (Method method : testSuite.getClass().getDeclaredMethods()) {
-            	Neo4jRestGraph graph = new Neo4jRestGraph(server);
+            	Neo4jRestGraph graph = (Neo4jRestGraph) this.getGraphInstance();
+    
             	graph.clear();
+          		for (Index idx : graph.getIndices()) {
+        			graph.dropIndex(idx.getIndexName());
+        		}
+            	graph.shutdown();
+            	graph = new Neo4jRestGraph(server);
+  	
                 if (method.getName().startsWith("test")) {
                     System.out.println("Testing " + method.getName() + "...");
                     method.invoke(testSuite);
+                    
+                graph = (Neo4jRestGraph) this.getGraphInstance();
+                    
+              	for (Index idx : graph.getIndices()) {
+            		graph.dropIndex(idx.getIndexName());
+            		}
+              	System.out.println(graph.getIndices());
+              	graph.shutdown();
+                graph.clear();
                 }
             }
         }
     }
-//
-//    private String getWorkingDirectory() {
-//        String directory = System.getProperty("neo4jGraphDirectory");
-//        if (directory == null) {
-//            if (System.getProperty("os.name").toUpperCase().contains("WINDOWS"))
-//                directory = "C:/temp/blueprints_test";
-//            else
-//                directory = "/tmp/blueprints_test";
-//        }
-//        return directory;
+    
+//    public static void main(String args[]) {
+//        org.junit.runner.JUnitCore.main("com.tinkerpop.blueprints.pgm.impls.neo4jrest.Neo4jRestGraphTest");
 //    }
-//
-//    public void testLongIdConversions() {
-//        String id1 = "100";  // good  100
-//        String id2 = "100.0"; // good 100
-//        String id3 = "100.1"; // good 100
-//        String id4 = "one"; // bad
-//
-//        try {
-//            Double.valueOf(id1).longValue();
-//            assertTrue(true);
-//        } catch (NumberFormatException e) {
-//            assertFalse(true);
-//        }
-//        try {
-//            Double.valueOf(id2).longValue();
-//            assertTrue(true);
-//        } catch (NumberFormatException e) {
-//            assertFalse(true);
-//        }
-//        try {
-//            Double.valueOf(id3).longValue();
-//            assertTrue(true);
-//        } catch (NumberFormatException e) {
-//            assertFalse(true);
-//        }
-//        try {
-//            Double.valueOf(id4).longValue();
-//            assertTrue(false);
-//        } catch (NumberFormatException e) {
-//            assertFalse(false);
-//        }
-//    }
-//
-//    public void testQueryIndex() throws Exception {
-//        String directory = System.getProperty("neo4jGraphDirectory");
-//        if (directory == null)
-//            directory = this.getWorkingDirectory();
-//        IndexableGraph graph = new Neo4jGraph(directory);
-//        Vertex a = graph.addVertex(null);
-//        a.setProperty("name", "marko");
-//        Iterator itty = graph.getIndex(Index.VERTICES, Vertex.class).get("name", Neo4jTokens.QUERY_HEADER + "*rko").iterator();
-//        int counter = 0;
-//        while (itty.hasNext()) {
-//            counter++;
-//            assertEquals(itty.next(), a);
-//        }
-//        assertEquals(counter, 1);
-//
-//        Vertex b = graph.addVertex(null);
-//        Edge edge = graph.addEdge(null, a, b, "knows");
-//        edge.setProperty("weight", 0.75);
-//        itty = graph.getIndex(Index.EDGES, Edge.class).get("label", Neo4jTokens.QUERY_HEADER + "k?ows").iterator();
-//        counter = 0;
-//        while (itty.hasNext()) {
-//            counter++;
-//            assertEquals(itty.next(), edge);
-//        }
-//        assertEquals(counter, 1);
-//        itty = graph.getIndex(Index.EDGES, Edge.class).get("weight", Neo4jTokens.QUERY_HEADER + "[0.5 TO 1.0]").iterator();
-//        counter = 0;
-//        while (itty.hasNext()) {
-//            counter++;
-//            assertEquals(itty.next(), edge);
-//        }
-//        assertEquals(counter, 1);
-//        assertEquals(count(graph.getIndex(Index.EDGES, Edge.class).get("weight", Neo4jTokens.QUERY_HEADER + "[0.1 TO 0.5]")), 0);
-//
-//
-//        graph.shutdown();
-//        deleteDirectory(new File(directory));
-//    }
+
 }

@@ -15,6 +15,7 @@ import java.util.Set;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
+ * @author Marcin Cieslik (marcin.cieslik@gmail.com)
  */
 public abstract class Neo4jRestElement implements Element {
 
@@ -36,15 +37,20 @@ public abstract class Neo4jRestElement implements Element {
         if (key.equals(StringFactory.ID) || (key.equals(StringFactory.LABEL) && this instanceof Edge))
             throw new RuntimeException(key + StringFactory.PROPERTY_EXCEPTION_MESSAGE);
         Object oldValue = this.getProperty(key); // ?
-            //for (Neo4jAutomaticIndex autoIndex : this.graph.getAutoIndices(this.getClass())) {
-            //    autoIndex.autoUpdate(key, value, oldValue, this);
-            //}
+        for (Neo4jRestAutomaticIndex autoIndex : this.graph.getAutoIndices(this.getClass())) {
+        	 autoIndex.autoUpdate(key, value, oldValue, this);
+        }
         this.rawElement.setProperty(key, value);
     }
 
     public Object removeProperty(final String key) {
     	try {
     		Object oldValue = this.rawElement.removeProperty(key);
+            if (null != oldValue) {
+                for (Neo4jRestAutomaticIndex autoIndex : this.graph.getAutoIndices(this.getClass())) {
+                    autoIndex.autoRemove(key, oldValue, this);
+                }
+            }
     		return oldValue;
     	} catch (NotFoundException e) {
     		return null;

@@ -1,6 +1,6 @@
 package com.tinkerpop.blueprints.pgm.impls.neo4jrest;
 
-//import com.tinkerpop.blueprints.pgm.AutomaticIndex;
+import com.tinkerpop.blueprints.pgm.AutomaticIndex;
 import com.tinkerpop.blueprints.pgm.Edge;
 import com.tinkerpop.blueprints.pgm.Vertex;
 import com.tinkerpop.blueprints.pgm.impls.StringFactory;
@@ -20,11 +20,11 @@ public class Neo4jRestEdge extends Neo4jRestElement implements Edge {
     protected Neo4jRestEdge(final RestRelationship relationship, final Neo4jRestGraph graph, boolean isNew) {
         super(graph);
         this.rawElement = relationship;
-//        if (isNew) {
-//            for (final Neo4jAutomaticIndex autoIndex : this.graph.getAutoIndices(Neo4jRestEdge.class)) {
-//                autoIndex.autoUpdate(AutomaticIndex.LABEL, this.getLabel(), null, this);
-//            }
-//        }
+        if (isNew) {
+            for (final Neo4jRestAutomaticIndex autoIndex : this.graph.getAutoIndices(Neo4jRestEdge.class)) {
+                autoIndex.autoUpdate(AutomaticIndex.LABEL, this.getLabel(), null, this);
+            }
+        }
     }
 
     public String getLabel() {
